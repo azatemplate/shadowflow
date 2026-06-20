@@ -7,6 +7,7 @@ export interface Lesson {
   difficulty: string;
   repeat_default: number;
   content: string;
+  is_published?: boolean;
 }
 
 export const STATIC_LESSONS_LIBRARY: Lesson[] = [
