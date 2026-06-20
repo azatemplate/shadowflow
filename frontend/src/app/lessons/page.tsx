@@ -72,57 +72,32 @@ export default function LessonLibrary() {
     }
   }, []);
 
-  // Fetch bài học từ API
+  // Lọc bài học trực tiếp ở Client Side (Offline Mode)
   useEffect(() => {
-    const fetchLessons = async () => {
-      setLoading(true);
-      try {
-        // Tạo query string
-        const params = new URLSearchParams();
-        if (selectedLanguage !== 'Tất cả') params.append('language', selectedLanguage);
-        if (selectedCategory !== 'Tất cả') params.append('category', selectedCategory);
-        if (selectedDifficulty !== 'Tất cả') params.append('difficulty', selectedDifficulty);
-        if (search.trim()) params.append('search', search);
-
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const res = await fetch(`${apiUrl}/api/lessons?${params.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setLessons(data);
-          setErrorMsg(null);
-        } else {
-          throw new Error();
-        }
-      } catch (err) {
-        console.log("Offline mode: Sử dụng bộ lọc client side.");
-        // Bộ lọc offline trên Client Side
-        const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
-        const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
-        let filtered = [...STATIC_LESSONS_LIBRARY, ...customLessons];
-        if (selectedLanguage !== 'Tất cả') {
-          filtered = filtered.filter(l => l.language.toLowerCase() === selectedLanguage.toLowerCase());
-        }
-        if (selectedCategory !== 'Tất cả') {
-          filtered = filtered.filter(l => l.category === selectedCategory);
-        }
-        if (selectedDifficulty !== 'Tất cả') {
-          filtered = filtered.filter(l => l.difficulty === selectedDifficulty);
-        }
-        if (search.trim()) {
-          const s = search.toLowerCase();
-          filtered = filtered.filter(l => 
-            l.title.toLowerCase().includes(s) || 
-            l.description.toLowerCase().includes(s)
-          );
-        }
-        setLessons(filtered);
-        setErrorMsg("Đang chạy ở chế độ ngoại tuyến. Kết quả hiển thị từ thư viện cục bộ.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLessons();
+    setLoading(true);
+    const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
+    const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+    let filtered = [...STATIC_LESSONS_LIBRARY, ...customLessons];
+    
+    if (selectedLanguage !== 'Tất cả') {
+      filtered = filtered.filter(l => l.language.toLowerCase() === selectedLanguage.toLowerCase());
+    }
+    if (selectedCategory !== 'Tất cả') {
+      filtered = filtered.filter(l => l.category === selectedCategory);
+    }
+    if (selectedDifficulty !== 'Tất cả') {
+      filtered = filtered.filter(l => l.difficulty === selectedDifficulty);
+    }
+    if (search.trim()) {
+      const s = search.toLowerCase();
+      filtered = filtered.filter(l => 
+        l.title.toLowerCase().includes(s) || 
+        l.description.toLowerCase().includes(s)
+      );
+    }
+    setLessons(filtered);
+    setErrorMsg(null);
+    setLoading(false);
   }, [selectedLanguage, selectedCategory, selectedDifficulty, search]);
 
   // Tìm thông tin bài học gần nhất để làm banner gợi ý

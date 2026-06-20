@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import { motion } from 'framer-motion';
 import { Play, Sparkles, BookOpen, ChevronRight, CheckCircle2, Mic, Volume2, Settings2 } from 'lucide-react';
 
+import { STATIC_LESSONS_LIBRARY } from '@/data/staticLessons';
+
 interface Lesson {
   id: number;
   title: string;
@@ -51,24 +53,12 @@ export default function Home() {
   const [customText, setCustomText] = useState('');
   const [loadingLessons, setLoadingLessons] = useState(true);
 
-  // Lấy các bài học từ API
+  // Lấy các bài học từ thư viện tĩnh
   useEffect(() => {
-    const fetchLessons = async () => {
-      try {
-        const res = await fetch('http://localhost:8000/api/lessons?limit=3');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.length > 0) {
-            setFeaturedLessons(data);
-          }
-        }
-      } catch (err) {
-        console.log("Không thể kết nối đến backend API. Sử dụng dữ liệu dự phòng.");
-      } finally {
-        setLoadingLessons(false);
-      }
-    };
-    fetchLessons();
+    if (STATIC_LESSONS_LIBRARY && STATIC_LESSONS_LIBRARY.length > 0) {
+      setFeaturedLessons(STATIC_LESSONS_LIBRARY.slice(0, 3));
+    }
+    setLoadingLessons(false);
   }, []);
 
   const handleStartCustom = (e: React.FormEvent) => {

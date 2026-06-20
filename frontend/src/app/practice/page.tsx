@@ -70,27 +70,9 @@ function PracticeArenaContent() {
     pauseMode,
     pausePreset,
     manualPauseSeconds
-  }, async (stats) => {
-    // Khi hoàn thành bài học, gửi log lên API
-    try {
-      const lesson_id = lessonIdParam ? parseInt(lessonIdParam) : null;
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      await fetch(`${apiUrl}/api/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lesson_id,
-          language,
-          sentences_count: stats.sentencesCount,
-          loops_count: stats.loopsCount,
-          duration_seconds: stats.durationSeconds
-        })
-      });
-      showToast("Ghi nhận phiên luyện tập thành công!");
-    } catch (e) {
-      console.log("Không thể lưu lịch sử luyện tập lên backend.");
-      showToast("Hoàn thành! (Offline Mode - Chưa lưu lịch sử)");
-    }
+  }, (stats) => {
+    // Hoàn thành bài học ở chế độ Offline
+    showToast("Chúc mừng! Bạn đã hoàn thành phiên luyện tập.");
   });
 
   const showToast = (msg: string) => {
@@ -98,9 +80,9 @@ function PracticeArenaContent() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Tải dữ liệu bài học (từ API hoặc Fallback hoặc LocalStorage)
+  // Tải dữ liệu bài học (Offline Mode)
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       if (modeParam === 'custom') {
         const storedText = localStorage.getItem('shadowflow_custom_text');
         const textToUse = storedText || "Building trust through every\nStrong solutions for construction\nCustom steel formwork delivered\nDesigned precisely for projects";
@@ -123,37 +105,21 @@ function PracticeArenaContent() {
         start(lines);
       } else if (lessonIdParam) {
         const id = parseInt(lessonIdParam);
-        try {
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-          const res = await fetch(`${apiUrl}/api/lessons/${id}`);
-          if (res.ok) {
-            const data = await res.json();
-            setLessonInfo(data);
-            setLanguage(data.language);
-            setRepeatLimit(data.repeat_default);
-            
-            const lines = data.content.split('\n').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
-            start(lines);
-            
-            // Lưu bài học gần nhất để tiếp tục học sau
-            localStorage.setItem('shadowflow_last_lesson_id', id.toString());
-          } else {
-            throw new Error();
-          }
-        } catch (e) {
-          // Fallback nếu không có mạng - Tìm từ static library hoặc local storage custom
-          const savedCustom = localStorage.getItem('shadowflow_custom_lessons');
-          const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
-          const foundCustom = customLessons.find(l => l.id === id);
-          
-          const fallback = foundCustom || STATIC_LESSONS_LIBRARY.find(l => l.id === id) || STATIC_LESSONS_LIBRARY[0];
-          setLessonInfo(fallback);
-          setLanguage(fallback.language);
-          setRepeatLimit(fallback.repeat_default);
-          const lines = fallback.content.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-          start(lines);
-          showToast("Sử dụng bài học dự phòng (Offline Mode)");
-        }
+        
+        // Tìm từ static library hoặc local storage custom
+        const savedCustom = localStorage.getItem('shadowflow_custom_lessons');
+        const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+        const foundCustom = customLessons.find(l => l.id === id);
+        
+        const fallback = foundCustom || STATIC_LESSONS_LIBRARY.find(l => l.id === id) || STATIC_LESSONS_LIBRARY[0];
+        setLessonInfo(fallback);
+        setLanguage(fallback.language);
+        setRepeatLimit(fallback.repeat_default);
+        const lines = fallback.content.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+        start(lines);
+        
+        // Lưu bài học gần nhất để tiếp tục học sau
+        localStorage.setItem('shadowflow_last_lesson_id', id.toString());
       } else {
         // Mặc định nạp câu trống hoặc hướng dẫn nếu truy cập trực tiếp
         const welcomeText = "Chào mừng bạn đến với ShadowFlow!\nHãy nhấp vào Danh sách bài học để chọn chủ đề.\nHoặc dán văn bản của bạn ở trang chủ.\nChúc bạn luyện nói tự nhiên và trôi chảy!";
