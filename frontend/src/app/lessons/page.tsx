@@ -5,233 +5,18 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Filter, Bookmark, Play, BookOpen, Clock, AlertCircle } from 'lucide-react';
-
-interface Lesson {
-  id: number;
-  title: string;
-  description: string;
-  language: string;
-  category: string;
-  difficulty: string;
-  repeat_default: number;
-}
-
-const STATIC_LESSONS_LIBRARY: Lesson[] = [
-  {
-    id: 1,
-    title: "Mẹ và bé: Mặc quần áo buổi sáng | Getting Dressed",
-    description: "Đoạn hội thoại ngắn giữa mẹ và bé khi chuẩn bị quần áo để bắt đầu ngày mới.",
-    language: "en",
-    category: "Daily Conversation",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 2,
-    title: "Mẹ và bé: Đi chơi công viên | Going to the Park",
-    description: "Hội thoại tiếng Anh thông dụng khi mẹ chuẩn bị cho bé đi chơi công viên.",
-    language: "en",
-    category: "Daily Conversation",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 3,
-    title: "Mẹ và bé: Dọn dẹp đồ chơi | Tidying Up Toys",
-    description: "Mẹ hướng dẫn bé cách cất đồ chơi gọn gàng sau khi chơi xong.",
-    language: "en",
-    category: "Daily Conversation",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 4,
-    title: "Mẹ và bé: Đánh răng trước khi ngủ | Brushing Teeth",
-    description: "Hội thoại vui vẻ giúp bé tạo thói quen đánh răng sạch sẽ trước khi đi ngủ.",
-    language: "en",
-    category: "Daily Conversation",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 5,
-    title: "Hội thoại công sở: Họp dự án | Business Meeting",
-    description: "Hội thoại tiếng Anh thương mại thường gặp khi thảo luận tiến độ dự án.",
-    language: "en",
-    category: "Business",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 6,
-    title: "Hỏi đường du lịch: Đến ga tàu | Asking for Directions",
-    description: "Mẫu câu hỏi đường đi ga tàu điện ngầm cơ bản dành cho người đi du lịch.",
-    language: "en",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 7,
-    title: "IELTS Speaking: Cuốn sách yêu thích | Favorite Book",
-    description: "Đoạn nói học thuật mô tả một cuốn sách ảnh hưởng lớn đến cuộc sống.",
-    language: "en",
-    category: "IELTS",
-    difficulty: "Advanced",
-    repeat_default: 2
-  },
-  {
-    id: 8,
-    title: "Xây dựng: Thi công bê tông & An toàn | Concrete Pouring",
-    description: "Từ vựng tiếng Anh kỹ thuật thi công đổ bê tông cốt thép tại công trường.",
-    language: "en",
-    category: "Construction",
-    difficulty: "Advanced",
-    repeat_default: 3
-  },
-  {
-    id: 9,
-    title: "Tiếng Việt: Chào hỏi xã giao | Vietnamese Greetings",
-    description: "Mẫu câu tiếng Việt cơ bản để chào hỏi và hỏi thăm sức khỏe hàng ngày.",
-    language: "vi",
-    category: "Daily Conversation",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 10,
-    title: "Tiếng Việt: Gọi món ăn ở nhà hàng | Ordering Food",
-    description: "Giao tiếp tại quán ăn khi muốn gọi phở và các món đặc sản Việt Nam.",
-    language: "vi",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 11,
-    title: "Tiếng Nhật: Mua vé tàu Shinkansen | Shinkansen Ticket",
-    description: "Mẫu câu hội thoại tiếng Nhật thực tế khi mua vé tàu cao tốc tại quầy.",
-    language: "ja",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 12,
-    title: "Tiếng Nhật: Chào hỏi buổi sáng | Japanese Greetings",
-    description: "Các câu giao tiếp tiếng Nhật ngắn gọn bắt đầu ngày mới.",
-    language: "ja",
-    category: "Japanese",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 13,
-    title: "Tiếng Hàn: Tự giới thiệu bản thân | Korean Intro",
-    description: "Học các câu nói tiếng Hàn cơ bản để giới thiệu tên, tuổi và nghề nghiệp.",
-    language: "ko",
-    category: "Korean",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 14,
-    title: "Tiếng Hàn: Mua sắm ở chợ Dongdaemun | Shopping",
-    description: "Hội thoại mặc cả và hỏi giá khi đi mua sắm quần áo tại Hàn Quốc.",
-    language: "ko",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 15,
-    title: "Tiếng Trung: Trả giá khi mua sắm | Bargaining",
-    description: "Các câu nói tiếng Trung thường dùng để mặc cả giảm giá khi mua quà lưu niệm.",
-    language: "zh",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 16,
-    title: "Tiếng Trung: Hỏi thăm gia đình | Family Talk",
-    description: "Chủ đề hỏi thăm số lượng thành viên và công việc của mọi người trong nhà.",
-    language: "zh",
-    category: "Daily Conversation",
-    difficulty: "Beginner",
-    repeat_default: 2
-  },
-  {
-    id: 17,
-    title: "Tiếng Trung: Ký kết hợp đồng thương mại | Business",
-    description: "Thoại thương mại cấp cao đàm phán ký kết hợp đồng giữa hai đối tác.",
-    language: "zh",
-    category: "Business",
-    difficulty: "Advanced",
-    repeat_default: 2
-  },
-  {
-    id: 18,
-    title: "Mẹ và bé: Tại sân bay nước ngoài | At the Airport",
-    description: "Mẹ hướng dẫn bé và thực hiện các thủ tục check-in tại sân bay khi chuẩn bị đi nước ngoài.",
-    language: "en",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 19,
-    title: "Mẹ và bé: Trên chuyến bay | On the Airplane",
-    description: "Mẹ giao tiếp với tiếp viên hàng không để xin nước ấm pha sữa và chăn đắp cho bé.",
-    language: "en",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 20,
-    title: "Mẹ học tiếng Nhật: Mua sữa và tã ở siêu thị | Buying Baby Milk and Diapers",
-    description: "Mẫu hội thoại tiếng Nhật cho mẹ hỏi nhân viên siêu thị để tìm mua sữa công thức và tã giấy cho bé.",
-    language: "ja",
-    category: "Travel",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 21,
-    title: "Mẹ học tiếng Hàn: Đăng ký khám bệnh cho bé | At the Pediatric Clinic",
-    description: "Hội thoại tại phòng khám nhi ở Hàn Quốc khi mẹ khai báo các triệu chứng ho sốt của bé.",
-    language: "ko",
-    category: "Korean",
-    difficulty: "Normal",
-    repeat_default: 2
-  },
-  {
-    id: 22,
-    title: "Mẹ học tiếng Trung: Tìm trường mẫu giáo cho bé | Kindergarten Inquiry",
-    description: "Mẹ hỏi thăm thông tin đăng ký nhập học và các chế độ ăn uống cho con tại trường mầm non.",
-    language: "zh",
-    category: "Daily Conversation",
-    difficulty: "Advanced",
-    repeat_default: 2
-  },
-  {
-    id: 23,
-    title: "Mẹ và bé: Làm quen hàng xóm mới | Meeting New Neighbors",
-    description: "Mẹ hướng dẫn bé chào hỏi và giao tiếp xã giao với người hàng xóm nước ngoài thân thiện.",
-    language: "en",
-    category: "Daily Conversation",
-    difficulty: "Normal",
-    repeat_default: 2
-  }
-];
+import { Lesson, STATIC_LESSONS_LIBRARY } from '@/data/staticLessons';
 
 export default function LessonLibrary() {
   const [lessons, setLessons] = useState<Lesson[]>(STATIC_LESSONS_LIBRARY);
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('Tất cả');
   const [selectedCategory, setSelectedCategory] = useState('Tất cả');
   const [selectedDifficulty, setSelectedDifficulty] = useState('Tất cả');
+  
+  // Phân trang
+  const [displayLimit, setDisplayLimit] = useState(20);
   
   // Bookmarks và bài học trước đó
   const [bookmarks, setBookmarks] = useState<number[]>([]);
@@ -245,6 +30,23 @@ export default function LessonLibrary() {
   const languages = ['Tất cả', 'en', 'vi', 'ja', 'ko', 'zh'];
   const categories = ['Tất cả', 'Daily Conversation', 'Business', 'Travel', 'IELTS', 'Construction', 'Japanese', 'Korean'];
   const difficulties = ['Tất cả', 'Beginner', 'Normal', 'Advanced'];
+
+  // Debounce tìm kiếm
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setSearch(searchInput);
+      setDisplayLimit(20); // Reset số bài học hiển thị khi đổi từ khóa
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchInput]);
+
+  // Reset displayLimit khi thay đổi bộ lọc
+  useEffect(() => {
+    setDisplayLimit(20);
+  }, [selectedLanguage, selectedCategory, selectedDifficulty]);
 
   const getLanguageLabel = (code: string) => {
     switch (code.toLowerCase()) {
@@ -294,7 +96,9 @@ export default function LessonLibrary() {
       } catch (err) {
         console.log("Offline mode: Sử dụng bộ lọc client side.");
         // Bộ lọc offline trên Client Side
-        let filtered = STATIC_LESSONS_LIBRARY;
+        const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
+        const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+        let filtered = [...STATIC_LESSONS_LIBRARY, ...customLessons];
         if (selectedLanguage !== 'Tất cả') {
           filtered = filtered.filter(l => l.language.toLowerCase() === selectedLanguage.toLowerCase());
         }
@@ -458,8 +262,8 @@ export default function LessonLibrary() {
                 <Search size={16} className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Tìm kiếm tiêu đề hoặc nội dung bài học..."
                   className="w-full pl-11 pr-4 py-3 rounded-2xl border border-slate-200 bg-white text-sm text-slate-950 focus:border-indigo-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-white transition-all duration-200"
                 />
@@ -490,70 +294,84 @@ export default function LessonLibrary() {
                 <p className="text-sm text-slate-500 mt-1">Vui lòng thay đổi từ khóa hoặc bộ lọc để thử lại.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <AnimatePresence mode="popLayout">
-                  {lessons.map((lesson) => {
-                    const isBookmarked = bookmarks.includes(lesson.id);
-                    return (
-                      <motion.div
-                        key={lesson.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.98 }}
-                        transition={{ duration: 0.2 }}
-                        className="flex flex-col justify-between bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-900/60 transition-all duration-300 group"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between gap-4 mb-3">
-                            <div className="flex flex-wrap gap-1.5">
-                              <span className="inline-block rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2.5 py-1 text-[10px] font-bold">
-                                {getLanguageLabel(lesson.language)}
-                              </span>
-                              <span className="inline-block rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 text-[10px] font-bold">
-                                {lesson.category}
-                              </span>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <AnimatePresence mode="popLayout">
+                    {lessons.slice(0, displayLimit).map((lesson) => {
+                      const isBookmarked = bookmarks.includes(lesson.id);
+                      return (
+                        <motion.div
+                          key={lesson.id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.98 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.98 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex flex-col justify-between bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-3xl p-6 shadow-sm hover:border-indigo-300 dark:hover:border-indigo-900/60 transition-all duration-300 group"
+                        >
+                          <div>
+                            <div className="flex items-center justify-between gap-4 mb-3">
+                              <div className="flex flex-wrap gap-1.5">
+                                <span className="inline-block rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2.5 py-1 text-[10px] font-bold">
+                                  {getLanguageLabel(lesson.language)}
+                                </span>
+                                <span className="inline-block rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2.5 py-1 text-[10px] font-bold">
+                                  {lesson.category}
+                                </span>
+                              </div>
+                              
+                              {/* Bookmark Button */}
+                              <button
+                                onClick={(e) => toggleBookmark(lesson.id, e)}
+                                className={`p-2 rounded-xl border transition-all duration-200 active:scale-90 ${
+                                  isBookmarked
+                                    ? 'bg-amber-50 border-amber-200 text-amber-500 dark:bg-amber-950/30 dark:border-amber-900/50'
+                                    : 'border-slate-200 text-slate-400 hover:text-slate-600 dark:border-slate-800 dark:hover:text-slate-200'
+                                }`}
+                              >
+                                <Bookmark size={14} fill={isBookmarked ? "currentColor" : "none"} />
+                              </button>
                             </div>
-                            
-                            {/* Bookmark Button */}
-                            <button
-                              onClick={(e) => toggleBookmark(lesson.id, e)}
-                              className={`p-2 rounded-xl border transition-all duration-200 active:scale-90 ${
-                                isBookmarked
-                                  ? 'bg-amber-50 border-amber-200 text-amber-500 dark:bg-amber-950/30 dark:border-amber-900/50'
-                                  : 'border-slate-200 text-slate-400 hover:text-slate-600 dark:border-slate-800 dark:hover:text-slate-200'
-                              }`}
-                            >
-                              <Bookmark size={14} fill={isBookmarked ? "currentColor" : "none"} />
-                            </button>
+
+                            <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">
+                              {lesson.title}
+                            </h3>
+                            <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-3">
+                              {lesson.description}
+                            </p>
                           </div>
 
-                          <h3 className="text-base font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">
-                            {lesson.title}
-                          </h3>
-                          <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-3">
-                            {lesson.description}
-                          </p>
-                        </div>
+                          <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                            <span className="text-xs font-semibold text-slate-400">Độ khó: 
+                              <span className={`ml-1 font-bold ${
+                                lesson.difficulty === 'Beginner' ? 'text-green-500' :
+                                lesson.difficulty === 'Advanced' ? 'text-red-500' : 'text-amber-500'
+                              }`}>{lesson.difficulty}</span>
+                            </span>
+                            <Link
+                              href={`/practice?lesson_id=${lesson.id}`}
+                              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 group-hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/10 active:scale-95 transition-all duration-200"
+                            >
+                              Luyện tập <Play size={8} fill="currentColor" />
+                            </Link>
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
 
-                        <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                          <span className="text-xs font-semibold text-slate-400">Độ khó: 
-                            <span className={`ml-1 font-bold ${
-                              lesson.difficulty === 'Beginner' ? 'text-green-500' :
-                              lesson.difficulty === 'Advanced' ? 'text-red-500' : 'text-amber-500'
-                            }`}>{lesson.difficulty}</span>
-                          </span>
-                          <Link
-                            href={`/practice?lesson_id=${lesson.id}`}
-                            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 group-hover:bg-indigo-500 px-4 py-2 text-xs font-bold text-white shadow-md shadow-indigo-600/10 active:scale-95 transition-all duration-200"
-                          >
-                            Luyện tập <Play size={8} fill="currentColor" />
-                          </Link>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                {/* Tải thêm bài học */}
+                {lessons.length > displayLimit && (
+                  <div className="flex justify-center pt-4">
+                    <button
+                      onClick={() => setDisplayLimit(prev => prev + 20)}
+                      className="px-6 py-3 rounded-2xl bg-white hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-sm font-bold text-indigo-600 dark:text-indigo-400 transition-all duration-200 active:scale-95 shadow-sm"
+                    >
+                      Tải thêm bài học
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

@@ -8,19 +8,7 @@ import {
   Trash2, Edit, Save, X, BarChart3, Upload, CheckCircle2, AlertCircle, Eye, EyeOff 
 } from 'lucide-react';
 
-interface Lesson {
-  id: number;
-  title: string;
-  description: string;
-  language: string;
-  category: string;
-  difficulty: string;
-  voice: string | null;
-  repeat_default: number;
-  content: string;
-  is_published: boolean;
-  created_at: string;
-}
+import { Lesson, STATIC_LESSONS_LIBRARY } from '@/data/staticLessons';
 
 interface LanguageStat {
   language: string;
@@ -172,6 +160,19 @@ export default function AdminDashboard() {
         setAnalytics(data);
       }
     } catch (e) {
+      const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
+      const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+      const all = [...STATIC_LESSONS_LIBRARY, ...customLessons];
+      setLessons(all);
+      
+      // Calculate local offline statistics
+      setAnalytics({
+        total_lessons: all.length,
+        total_sessions: 0,
+        total_duration_hours: 0,
+        language_stats: [],
+        most_practiced_lessons: []
+      });
       showToast("Không kết nối được API. Chạy chế độ Offline Mock data.", "error");
     } finally {
       setLoadingData(false);
@@ -215,7 +216,38 @@ export default function AdminDashboard() {
         showToast(err.detail || "Đã xảy ra lỗi khi tạo bài học", "error");
       }
     } catch (e) {
-      showToast("Không thể gửi dữ liệu. Kiểm tra kết nối mạng/API.", "error");
+      // Offline mode: Save to localStorage
+      const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
+      const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+      
+      const newId = Math.max(...STATIC_LESSONS_LIBRARY.map(l => l.id), ...customLessons.map(l => l.id), 0) + 1;
+      const createdLesson: Lesson = {
+        id: newId,
+        title: newLesson.title,
+        description: newLesson.description,
+        language: newLesson.language,
+        category: newLesson.category,
+        difficulty: newLesson.difficulty,
+        repeat_default: newLesson.repeat_default,
+        content: newLesson.content
+      };
+      
+      const updated = [...customLessons, createdLesson];
+      localStorage.setItem('shadowflow_custom_lessons', JSON.stringify(updated));
+      
+      showToast("Tạo bài học lưu vào bộ nhớ trình duyệt thành công (Offline)!");
+      setNewLesson({
+        title: '',
+        description: '',
+        language: 'en',
+        category: 'Daily Conversation',
+        difficulty: 'Normal',
+        voice: '',
+        repeat_default: 1,
+        content: '',
+        is_published: true
+      });
+      setActiveTab('lessons');
     }
   };
 
@@ -236,7 +268,17 @@ export default function AdminDashboard() {
         showToast("Lỗi khi xóa bài học", "error");
       }
     } catch (e) {
-      showToast("Không thể kết nối đến API.", "error");
+      const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
+      const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+      
+      if (customLessons.some(l => l.id === id)) {
+        const updated = customLessons.filter(l => l.id !== id);
+        localStorage.setItem('shadowflow_custom_lessons', JSON.stringify(updated));
+        showToast("Đã xóa bài học khỏi bộ nhớ trình duyệt!");
+        fetchData();
+      } else {
+        showToast("Không thể xóa bài học mặc định của hệ thống ở chế độ ngoại tuyến.", "error");
+      }
     }
   };
 
@@ -273,7 +315,19 @@ export default function AdminDashboard() {
         showToast("Lỗi khi cập nhật bài học", "error");
       }
     } catch (e) {
-      showToast("Không kết nối được API.", "error");
+      const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
+      const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+      
+      if (customLessons.some(l => l.id === editingLessonId)) {
+        const updated = customLessons.map(l => l.id === editingLessonId ? { ...l, ...editingFields } as Lesson : l);
+        localStorage.setItem('shadowflow_custom_lessons', JSON.stringify(updated));
+        showToast("Đã cập nhật bài học trong bộ nhớ trình duyệt!");
+        setEditingLessonId(null);
+        setEditingFields({});
+        fetchData();
+      } else {
+        showToast("Không thể sửa đổi bài học mặc định ở chế độ ngoại tuyến.", "error");
+      }
     }
   };
 
@@ -309,7 +363,85 @@ export default function AdminDashboard() {
         showToast(data.detail || "Lỗi khi upload CSV", "error");
       }
     } catch (e) {
-      showToast("Không kết nối được API.", "error");
+      // Offline mode: Parse CSV on client-side
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const csvText = event.target?.result as string;
+          if (!csvText) return;
+          
+          const lines = csvText.split(/\r?\n/);
+          if (lines.length < 2) {
+            showToast("File CSV rỗng hoặc sai cấu trúc.", "error");
+            return;
+          }
+          
+          // Lấy header
+          const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+          const titleIdx = headers.indexOf('title');
+          const contentIdx = headers.indexOf('content');
+          if (titleIdx === -1 || contentIdx === -1) {
+            showToast("File CSV phải có tiêu đề chứa 'title' và 'content'.", "error");
+            return;
+          }
+          
+          const savedCustom = typeof window !== 'undefined' ? localStorage.getItem('shadowflow_custom_lessons') : null;
+          const customLessons: Lesson[] = savedCustom ? JSON.parse(savedCustom) : [];
+          let currentMaxId = Math.max(...STATIC_LESSONS_LIBRARY.map(l => l.id), ...customLessons.map(l => l.id), 0);
+          
+          const importedLessons: Lesson[] = [];
+          
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            
+            // Simple split by comma, ignoring commas inside quotes
+            const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || line.split(',');
+            const values = matches.map(v => v.trim().replace(/^["']|["']$/g, '').replace(/""/g, '"'));
+            
+            const getVal = (field: string, fallbackVal: string = '') => {
+              const idx = headers.indexOf(field);
+              return (idx !== -1 && values[idx]) ? values[idx] : fallbackVal;
+            };
+            
+            const title = getVal('title');
+            let content = getVal('content').replace(/\\n/g, '\n').replace(/\|/g, '\n');
+            
+            if (!title || !content) continue;
+            
+            let repeat_default = 1;
+            try {
+              repeat_default = parseInt(getVal('repeat_default', '1')) || 1;
+            } catch {}
+            
+            currentMaxId++;
+            importedLessons.push({
+              id: currentMaxId,
+              title,
+              description: getVal('description', 'Mô tả bài học import offline'),
+              language: getVal('language', 'en'),
+              category: getVal('category', 'Daily Conversation'),
+              difficulty: getVal('difficulty', 'Normal'),
+              repeat_default,
+              content
+            });
+          }
+          
+          if (importedLessons.length > 0) {
+            const updated = [...customLessons, ...importedLessons];
+            localStorage.setItem('shadowflow_custom_lessons', JSON.stringify(updated));
+            showToast(`Đã import thành công ${importedLessons.length} bài học vào bộ nhớ trình duyệt!`);
+            setCsvFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            setActiveTab('lessons');
+          } else {
+            showToast("Không tìm thấy dữ liệu hợp lệ trong file CSV.", "error");
+          }
+        } catch (err) {
+          showToast("Lỗi xử lý file CSV offline.", "error");
+        }
+      };
+      reader.readAsText(csvFile);
     } finally {
       setCsvUploading(false);
     }
